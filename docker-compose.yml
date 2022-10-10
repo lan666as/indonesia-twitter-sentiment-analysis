@@ -32,6 +32,7 @@ volumes:
 services:
   postgres:
     container_name: postgres
+    restart: unless-stopped
     image: postgres:latest
     volumes:
       - metadata_data:/var/lib/postgresql/data
@@ -43,6 +44,7 @@ services:
   # Need 3.5 or later for container nodes
   zookeeper:
     container_name: zookeeper
+    restart: unless-stopped
     image: zookeeper:3.5
     ports:
       - "2181:2181"
@@ -52,6 +54,7 @@ services:
 
   coordinator:
     image: apache/druid:24.0.0
+    restart: unless-stopped
     container_name: coordinator
     volumes:
       - druid_shared:/opt/shared
@@ -68,6 +71,7 @@ services:
 
   broker:
     image: apache/druid:24.0.0
+    restart: unless-stopped
     container_name: broker
     volumes:
       - broker_var:/opt/druid/var
@@ -84,6 +88,7 @@ services:
 
   historical:
     image: apache/druid:24.0.0
+    restart: unless-stopped
     container_name: historical
     volumes:
       - druid_shared:/opt/shared
@@ -101,6 +106,7 @@ services:
 
   middlemanager:
     image: apache/druid:24.0.0
+    restart: unless-stopped
     container_name: middlemanager
     volumes:
       - druid_shared:/opt/shared
@@ -119,6 +125,7 @@ services:
 
   router:
     image: apache/druid:24.0.0
+    restart: unless-stopped
     container_name: router
     volumes:
       - router_var:/opt/druid/var
@@ -135,6 +142,7 @@ services:
   
   kafka:
     image: docker.io/bitnami/kafka:3.2
+    restart: unless-stopped
     ports:
       - "9092:9092"
     volumes:
@@ -151,5 +159,17 @@ services:
 
   superset:
     image: amancevice/superset:latest
+    restart: unless-stopped
     ports:
       - 8088:8088
+
+  nginx:
+    image: nginx:latest
+    restart: unless-stopped
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ${PWD}/cert.pem:/etc/ssl/certs/cert.pem
+      - ${PWD}/key.pem:/etc/ssl/private/key.pem
+      - ${PWD}/nginx.conf:/etc/nginx/nginx.conf

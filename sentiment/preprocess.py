@@ -1,5 +1,4 @@
 import pandas as pd
-
 import nltk
 import re
 
@@ -7,11 +6,6 @@ alay_dict = pd.read_csv('lexicon/slang-words.csv', encoding='latin-1', header=No
 alay_dict = alay_dict.rename(columns={0: 'original', 
                                       1: 'replacement'})
 alay_dict_map = dict(zip(alay_dict['original'], alay_dict['replacement']))
-
-tweet_tokenizer = nltk.TweetTokenizer()
-
-def tokenize_tweet(text):
-  return " ".join(tweet_tokenizer.tokenize(text))
 
 def preprocess_tweet(text):
   text = re.sub(r'RT @\w+:', ' ', text) # Remove RT symbol
@@ -42,13 +36,9 @@ def normalize_alay(text):
 
   return ' '.join([preserve_case(word, alay_dict_map[word.lower()]) if word.lower() in alay_dict_map else word for word in text.split(' ')])
 
-
 def preprocess(text):
     text = preprocess_tweet(text)
     text = explode_hashtag(text)
     text = normalize_alay(text)
-    # text = tokenize_tweet(text)
-    # text = text.lower()
-
 
     return text
