@@ -1,0 +1,5 @@
+tweepy
+pandas
+nltk
+PySastrawi
+kafka-python
