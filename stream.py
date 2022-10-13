@@ -1,9 +1,9 @@
 import tweepy
 from kafka import KafkaProducer
-import time
 import json
+import config
 
-BEARER_TOKEN = "BEARER_KEY"
+BEARER_TOKEN = config.BEARER_TOKEN
 ALL_EXPANSIONS = ["author_id", "referenced_tweets.id", "edit_history_tweet_ids", "in_reply_to_user_id", "attachments.media_keys", "attachments.poll_ids", "geo.place_id", "entities.mentions.username", "referenced_tweets.id.author_id",]
 ALL_MEDIA_FIELDS = ["media_key", "type", "url", "duration_ms", "height", "preview_image_url", "public_metrics", "width", "alt_text", "variants",]
 ALL_PLACE_FIELDS = ["full_name", "id", "contained_within", "country", "country_code", "geo", "name", "place_type",]
@@ -25,23 +25,24 @@ class TwitterStreamingClient(tweepy.StreamingClient):
         
         data = response.data
         matching_rules = response.matching_rules
-        
-        id = data.id
-        date = data.created_at.isoformat()
-        text = data.text
-        tags = [matching_rule.tag for matching_rule in matching_rules] 
-        
-        message = {
-            "id" : id,
-            "date" : date,
-            "text" : text,
-            "tags" : tags,
-        }
 
-        self.producer.send('tweets', message)
+        if data is not None:
+            id = data.id
+            date = data.created_at.isoformat()
+            text = data.text
+            tags = [matching_rule.tag for matching_rule in matching_rules] 
+            
+            message = {
+                "id" : id,
+                "date" : date,
+                "text" : text,
+                "tags" : tags,
+            }
 
-        print(message)
-        print("#"*80)
+            self.producer.send('tweets', message)
+
+            print(message)
+            print("#"*80)
 
 streaming_client_test = TwitterStreamingClient(BEARER_TOKEN)
 print(f"Rule used: {streaming_client_test.get_rules()}")

@@ -27,6 +27,7 @@ volumes:
   router_var: {}
   druid_shared: {}
   kafka_data: {}
+  zookeeper_data: {}
 
 
 services:
@@ -46,6 +47,8 @@ services:
     container_name: zookeeper
     restart: unless-stopped
     image: zookeeper:3.5
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper
     ports:
       - "2181:2181"
     environment:
