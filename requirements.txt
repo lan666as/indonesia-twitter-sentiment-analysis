@@ -3,3 +3,5 @@ pandas
 nltk
 PySastrawi
 kafka-python
+datasets
+transformers

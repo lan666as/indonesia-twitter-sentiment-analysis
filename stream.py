@@ -1,7 +1,7 @@
 import tweepy
 from kafka import KafkaProducer
 import json
-import config
+import config.config as config
 
 BEARER_TOKEN = config.BEARER_TOKEN
 ALL_EXPANSIONS = ["author_id", "referenced_tweets.id", "edit_history_tweet_ids", "in_reply_to_user_id", "attachments.media_keys", "attachments.poll_ids", "geo.place_id", "entities.mentions.username", "referenced_tweets.id.author_id",]
@@ -10,8 +10,6 @@ ALL_PLACE_FIELDS = ["full_name", "id", "contained_within", "country", "country_c
 ALL_POLL_FIELDS = ["id", "options", "duration_minutes", "end_datetime", "voting_status",]
 ALL_TWEET_FIELDS = ["id", "text", "attachments", "author_id", "context_annotations", "conversation_id", "created_at", "entities", "geo", "in_reply_to_user_id", "lang", "possibly_sensitive", "public_metrics", "referenced_tweets", "reply_settings", "source", "withheld",]
 ALL_USER_FIELDS = ["id", "name", "username", "created_at", "description", "entities", "location", "pinned_tweet_id", "profile_image_url", "protected", "public_metrics", "url", "verified", "withheld",]
-
-client = tweepy.Client(BEARER_TOKEN, wait_on_rate_limit=True)
 
 class TwitterStreamingClient(tweepy.StreamingClient):
     def __init__(self, bearer_token):
@@ -30,16 +28,16 @@ class TwitterStreamingClient(tweepy.StreamingClient):
             id = data.id
             date = data.created_at.isoformat()
             text = data.text
-            tags = [matching_rule.tag for matching_rule in matching_rules] 
+            tags = [matching_rule.tag.split(';') for matching_rule in matching_rules] 
             
             message = {
                 "id" : id,
                 "date" : date,
                 "text" : text,
-                "tags" : tags,
+                "tags" : [tag[0] for tag in tags],
             }
-
-            self.producer.send('tweets', message)
+            
+            self.producer.send(tags[0][1], message)
 
             print(message)
             print("#"*80)

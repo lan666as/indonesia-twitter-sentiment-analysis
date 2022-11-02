@@ -16,10 +16,10 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-version: "2.2"
+version: "3.9"
 
 volumes:
-  metadata_data: {}
+  database_data: {}
   middle_var: {}
   historical_var: {}
   broker_var: {}
@@ -31,16 +31,15 @@ volumes:
 
 
 services:
-  postgres:
-    container_name: postgres
+  database:
+    container_name: database
     restart: unless-stopped
     image: postgres:latest
     volumes:
-      - metadata_data:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_PASSWORD=FoolishPassword
-      - POSTGRES_USER=druid
-      - POSTGRES_DB=druid
+      - database_data:/var/lib/postgresql/data
+      - ${PWD}/config/postgres-docker-entrypoint:/docker-entrypoint-initdb.d
+    env_file:
+      - config/database.env
 
   # Need 3.5 or later for container nodes
   zookeeper:
@@ -50,10 +49,9 @@ services:
     volumes:
       - zookeeper_data:/var/lib/zookeeper
     ports:
-      - "2181:2181"
-    environment:
-      - ZOO_MY_ID=1
-      - ALLOW_ANONYMOUS_LOGIN=yes
+      - "127.0.0.1:2181:2181"
+    env_file:
+      - config/zookeeper.env
 
   coordinator:
     image: apache/druid:24.0.0
@@ -64,13 +62,13 @@ services:
       - coordinator_var:/opt/druid/var
     depends_on: 
       - zookeeper
-      - postgres
+      - database
     ports:
-      - "8081:8081"
+      - "127.0.0.1:8081:8081"
     command:
       - coordinator
     env_file:
-      - environment
+      - config/druid.env
 
   broker:
     image: apache/druid:24.0.0
@@ -80,14 +78,14 @@ services:
       - broker_var:/opt/druid/var
     depends_on: 
       - zookeeper
-      - postgres
+      - database
       - coordinator
     ports:
-      - "8082:8082"
+      - "127.0.0.1:8082:8082"
     command:
       - broker
     env_file:
-      - environment
+      - config/druid.env
 
   historical:
     image: apache/druid:24.0.0
@@ -98,14 +96,14 @@ services:
       - historical_var:/opt/druid/var
     depends_on: 
       - zookeeper
-      - postgres
+      - database
       - coordinator
     ports:
-      - "8083:8083"
+      - "127.0.0.1:8083:8083"
     command:
       - historical
     env_file:
-      - environment
+      - config/druid.env
 
   middlemanager:
     image: apache/druid:24.0.0
@@ -116,15 +114,15 @@ services:
       - middle_var:/opt/druid/var
     depends_on: 
       - zookeeper
-      - postgres
+      - database
       - coordinator
     ports:
-      - "8091:8091"
-      - "8100-8105:8100-8105"
+      - "127.0.0.1:8091:8091"
+      - "127.0.0.1:8100-8105:8100-8105"
     command:
       - middleManager
     env_file:
-      - environment
+      - config/druid.env
 
   router:
     image: apache/druid:24.0.0
@@ -134,37 +132,46 @@ services:
       - router_var:/opt/druid/var
     depends_on:
       - zookeeper
-      - postgres
+      - database
       - coordinator
     ports:
-      - "9999:8888"
+      - "127.0.0.1:9999:8888"
     command:
       - router
     env_file:
-      - environment
+      - config/druid.env
   
   kafka:
     image: docker.io/bitnami/kafka:3.2
     restart: unless-stopped
     ports:
-      - "9092:9092"
+      - "127.0.0.1:9092:9092"
     volumes:
       - kafka_data:/bitnami
-    environment:
-      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
-      - ALLOW_PLAINTEXT_LISTENER=yes
-      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      - KAFKA_CFG_LISTENERS=PLAINTEXT://:29092,PLAINTEXT_HOST://:9092
-      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
-      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
     depends_on:
       - zookeeper
+    env_file:
+      - config/kafka.env
+
+  # superset:
+  #   image: amancevice/superset:latest
+  #   restart: unless-stopped
+  #   ports:
+  #     - "127.0.0.1:8088:8088"
+  #   env_file:
+  #     - config/superset.env
 
   superset:
-    image: amancevice/superset:latest
-    restart: unless-stopped
+    image: apache/superset:latest
+    init: true
+    depends_on:
+      - database
     ports:
-      - 8088:8088
+      - "127.0.0.1:8088:8088"
+    volumes:
+      - ${PWD}/config/superset_config.py:/app/pythonpath/superset_config.py
+    env_file:
+      - config/superset.env
 
   nginx:
     image: nginx:latest
@@ -173,6 +180,6 @@ services:
       - 80:80
       - 443:443
     volumes:
-      - ${PWD}/cert.pem:/etc/ssl/certs/cert.pem
-      - ${PWD}/key.pem:/etc/ssl/private/key.pem
-      - ${PWD}/nginx.conf:/etc/nginx/nginx.conf
+      - ${PWD}/config/cert_unitrend.pem:/etc/ssl/certs/cert.pem
+      - ${PWD}/config/key_unitrend.pem:/etc/ssl/private/key.pem
+      - ${PWD}/config/nginx.conf:/etc/nginx/nginx.conf

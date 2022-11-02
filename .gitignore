@@ -1,3 +1,10 @@
 key.pem
 cert.pem
 config.py
+
+config/**
+!config/nginx.conf
+sentiment/model/**
+
+__pycache__/
+__pycache__/**
