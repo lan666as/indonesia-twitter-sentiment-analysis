@@ -6,7 +6,7 @@ class PointSpatialJoin(object):
     Give a ISO 3166-2 to given point coordinate
     """
 
-    def __init__(self, path='assets/geoBoundaries-IDN-ADM1.geojson'):
+    def __init__(self, path='sentiment/assets/geoBoundaries-IDN-ADM1.geojson'):
         self.path = path
         self.gdf = geopandas.read_file(self.path)
         self.province_dict = self.build_dict(self.gdf)
