@@ -33,7 +33,7 @@ class TwitterStreamingClient(tweepy.StreamingClient):
         if data is not None:
             tags = [matching_rule.tag.split(';') for matching_rule in matching_rules]
             
-            lat, long = None, None
+            lat, long = 0.0, 0.0
             if data.geo:
                 lat1, long1, lat2, long2 = places_dict[data.geo["place_id"]].geo["bbox"]
                 lat, long = (lat1+lat2)/2, (long1+long2)/2

@@ -15,9 +15,12 @@ class PointSpatialJoin(object):
         return {row["shapeISO"] : row["geometry"] for i, row in gdf.iterrows()}
 
     def find_province(self, x, y):
+        if (abs(x-0.0) < 1e-6 and abs(y-0.0) < 1e-6):
+            return ""
+
         point = Point(x, y)
         for k, v in self.province_dict.items():
             if point.within(v):
                 return k
         
-        return None
+        return ""
