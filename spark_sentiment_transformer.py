@@ -41,6 +41,9 @@ geo = PointSpatialJoin()
 def predict_sentiment_label(text):
     return analyzer.predict(text)[0]["label"]
 
+def convert_coordinate_to_province_code(x, y):
+    return geo.find_province(x, y)
+
 kafka_df = spark.readStream.format("kafka").option("kafka.bootstrap.servers", "localhost:9092").option("subscribe", "tweets").option("failOnDataLoss", "false").load()
 kafka_df_string = kafka_df.selectExpr("CAST(key AS STRING)", "CAST(value AS STRING)")
 
@@ -48,7 +51,7 @@ tweets_table = kafka_df_string.select(from_json(col("value"), schema).alias("dat
 
 preprocess_text = udf(preprocess, StringType())
 text_to_sentiment_label = udf(predict_sentiment_label, StringType())
-point_to_province_iso = udf(geo.find_province, StringType())
+point_to_province_iso = udf(convert_coordinate_to_province_code, StringType())
 
 tweets_table = tweets_table.withColumn("clean_text", preprocess_text("text"))
 tweets_table = tweets_table.withColumn("sentiment", text_to_sentiment_label("clean_text"))
