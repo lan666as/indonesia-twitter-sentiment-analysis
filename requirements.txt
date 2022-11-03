@@ -5,3 +5,6 @@ PySastrawi
 kafka-python
 datasets
 transformers
+geopandas
+matplotlib
+pygeos

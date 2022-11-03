@@ -5,6 +5,7 @@ config.py
 config/**
 !config/nginx.conf
 sentiment/model/**
+sentiment/assets/**
 
 __pycache__/
 __pycache__/**
