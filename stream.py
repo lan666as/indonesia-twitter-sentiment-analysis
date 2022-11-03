@@ -53,9 +53,13 @@ class TwitterStreamingClient(tweepy.StreamingClient):
                 "tags" : [tag[0] for tag in tags],
             }
             
+            if data.geo:
+                print(message)
+
             self.producer.send(tags[0][1], message)
 
-            print(message)
+            # print(message)
+            
 
 streaming_client = TwitterStreamingClient(BEARER_TOKEN)
 print(f"Rule used: {streaming_client.get_rules()}")

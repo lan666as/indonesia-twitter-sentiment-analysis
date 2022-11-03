@@ -41,6 +41,15 @@ geo = PointSpatialJoin()
 def predict_sentiment_label(text):
     return analyzer.predict(text)[0]["label"]
 
+def sentiment_label_to_score(label):
+    score_dict = {
+        "negative" : -1.0,
+        "neutral" : 0.0,
+        "positive" : 1.0,
+    }
+
+    return score_dict[label]
+
 def convert_coordinate_to_province_code(x, y):
     return geo.find_province(x, y)
 
@@ -51,10 +60,12 @@ tweets_table = kafka_df_string.select(from_json(col("value"), schema).alias("dat
 
 preprocess_text = udf(preprocess, StringType())
 text_to_sentiment_label = udf(predict_sentiment_label, StringType())
+convert_sentiment_label_to_score = udf(sentiment_label_to_score, DoubleType())
 point_to_province_iso = udf(convert_coordinate_to_province_code, StringType())
 
 tweets_table = tweets_table.withColumn("clean_text", preprocess_text("text"))
 tweets_table = tweets_table.withColumn("sentiment", text_to_sentiment_label("clean_text"))
+tweets_table = tweets_table.withColumn("sentiment_score", convert_sentiment_label_to_score("sentiment"))
 tweets_table = tweets_table.withColumn("province_code", point_to_province_iso("lat", "long"))
 
 tweets_table = tweets_table.withColumn("tags", explode("tags"))
