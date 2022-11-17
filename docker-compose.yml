@@ -16,6 +16,16 @@
 # specific language governing permissions and limitations
 # under the License.
 #
+
+x-superset-image: &superset-image apache/superset:${TAG:-latest-dev}
+x-superset-depends-on: &superset-depends-on
+  - database
+  - redis
+x-superset-volumes: &superset-volumes
+  # /app/pythonpath_docker will be appended to the PYTHONPATH in the final container
+  - ./config/superset:/app/docker
+  - superset_data:/app/superset_home
+
 version: "3.9"
 
 volumes:
@@ -28,6 +38,8 @@ volumes:
   druid_shared: {}
   kafka_data: {}
   zookeeper_data: {}
+  redis_data : {}
+  superset_data : {}
 
 
 services:
@@ -45,9 +57,9 @@ services:
   zookeeper:
     container_name: zookeeper
     restart: unless-stopped
-    image: zookeeper:3.5
+    image: bitnami/zookeeper:latest
     volumes:
-      - zookeeper_data:/var/lib/zookeeper
+      - zookeeper_data:/bitnami
     ports:
       - "127.0.0.1:2181:2181"
     env_file:
@@ -142,7 +154,7 @@ services:
       - config/druid.env
   
   kafka:
-    image: docker.io/bitnami/kafka:3.2
+    image: bitnami/kafka:latest
     restart: unless-stopped
     ports:
       - "127.0.0.1:9092:9092"
@@ -161,17 +173,82 @@ services:
   #   env_file:
   #     - config/superset.env
 
-  superset:
-    image: apache/superset:latest
-    init: true
-    depends_on:
-      - database
-    ports:
-      - "127.0.0.1:8088:8088"
+  redis:
+    image: redis:latest
+    container_name: redis
+    restart: unless-stopped
     volumes:
-      - ${PWD}/config/superset_config.py:/app/pythonpath/superset_config.py
+      - redis_data:/data
+
+  # superset:
+  #   image: apache/superset:latest
+  #   container_name: superset_app
+  #   command: ["/app/docker/docker-bootstrap.sh", "app-gunicorn"]
+  #   user: "root"
+  #   restart: unless-stopped
+  #   # init: true
+  #   depends_on:
+  #     - database
+  #     - redis
+  #   ports:
+  #     - "127.0.0.1:8088:8088"
+  #   volumes:
+  #     # - ${PWD}/config/superset_config.py:/app/pythonpath/superset_config.py
+  #     - ./config/superset:/app/docker
+  #     - superset_data:/app/superset_home
+  #   env_file:
+  #     - config/superset.env
+
+  superset:
     env_file:
       - config/superset.env
+    image: *superset-image
+    container_name: superset_app
+    command: ["/app/docker/docker-bootstrap.sh", "app-gunicorn"]
+    user: "root"
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8088:8088"
+    depends_on: *superset-depends-on
+    volumes: *superset-volumes
+
+  superset-init:
+    image: *superset-image
+    container_name: superset_init
+    command: ["/app/docker/docker-init.sh"]
+    env_file:
+      - config/superset.env
+    depends_on: *superset-depends-on
+    user: "root"
+    volumes: *superset-volumes
+    healthcheck:
+      disable: true
+
+  superset-worker:
+    image: *superset-image
+    container_name: superset_worker
+    command: ["/app/docker/docker-bootstrap.sh", "worker"]
+    env_file:
+      - config/superset.env
+    restart: unless-stopped
+    depends_on: *superset-depends-on
+    user: "root"
+    volumes: *superset-volumes
+    healthcheck:
+      test: ["CMD-SHELL", "celery inspect ping -A superset.tasks.celery_app:app -d celery@$$HOSTNAME"]
+
+  superset-worker-beat:
+    image: *superset-image
+    container_name: superset_worker_beat
+    command: ["/app/docker/docker-bootstrap.sh", "beat"]
+    env_file:
+      - config/superset.env
+    restart: unless-stopped
+    depends_on: *superset-depends-on
+    user: "root"
+    volumes: *superset-volumes
+    healthcheck:
+      disable: true
 
   nginx:
     image: nginx:latest

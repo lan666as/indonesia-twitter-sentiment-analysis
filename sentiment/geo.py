@@ -3,7 +3,7 @@ from shapely.geometry import Point
 
 class PointSpatialJoin(object):
     """
-    Give a ISO 3166-2 to given point coordinate
+    Give ISO 3166-2 code to a given point coordinate
     """
 
     def __init__(self, path='sentiment/assets/geoBoundaries-IDN-ADM1.geojson'):
