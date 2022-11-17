@@ -256,6 +256,8 @@ services:
     ports:
       - 80:80
       - 443:443
+    depends_on:
+      - superset
     volumes:
       - ${PWD}/config/cert_unitrend.pem:/etc/ssl/certs/cert.pem
       - ${PWD}/config/key_unitrend.pem:/etc/ssl/private/key.pem
