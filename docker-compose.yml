@@ -155,6 +155,7 @@ services:
   
   kafka:
     image: bitnami/kafka:latest
+    container_name: kafka
     restart: unless-stopped
     ports:
       - "127.0.0.1:9092:9092"
@@ -252,6 +253,7 @@ services:
 
   nginx:
     image: nginx:latest
+    container_name: nginx
     restart: unless-stopped
     ports:
       - 80:80

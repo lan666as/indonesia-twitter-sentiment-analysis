@@ -1,6 +1,7 @@
 import tweepy
 from kafka import KafkaProducer
 import json
+import pytz
 import config.config as config
 
 BEARER_TOKEN = config.BEARER_TOKEN
@@ -10,6 +11,7 @@ ALL_PLACE_FIELDS = ["full_name", "id", "contained_within", "country", "country_c
 ALL_POLL_FIELDS = ["id", "options", "duration_minutes", "end_datetime", "voting_status",]
 ALL_TWEET_FIELDS = ["id", "text", "attachments", "author_id", "context_annotations", "conversation_id", "created_at", "entities", "geo", "in_reply_to_user_id", "lang", "possibly_sensitive", "public_metrics", "referenced_tweets", "reply_settings", "source", "withheld",]
 ALL_USER_FIELDS = ["id", "name", "username", "created_at", "description", "entities", "location", "pinned_tweet_id", "profile_image_url", "protected", "public_metrics", "url", "verified", "withheld",]
+WIB = pytz.timezone('Asia/Jakarta')
 
 class TwitterStreamingClient(tweepy.StreamingClient):
     def __init__(self, bearer_token):
@@ -41,7 +43,7 @@ class TwitterStreamingClient(tweepy.StreamingClient):
             message = {
                 "id" : data.id,
                 "author_username" : users_dict[data.author_id].username,
-                "created_at" : data.created_at.isoformat(),
+                "created_at" : data.created_at.astimezone(WIB).isoformat(),
                 "text" : data.text,
                 "lat" : lat, "long" : long,
                 "source" : data.source,
