@@ -1,5 +1,4 @@
 import pandas as pd
-import nltk
 import re
 
 alay_dict = pd.read_csv('lexicon/slang-words.csv', encoding='latin-1', header=None)
@@ -18,8 +17,10 @@ def preprocess_tweet(text):
   return text
 
 def explode_hashtag(text):
-  text = re.sub(r'(?<![A-Z\W])(?=[A-Z])', ' ', text) # split at uppercase letter 
-  text = re.sub('#', ' ', text) # remove hashtag #
+  def split_title(match):
+    match = match.group(1)
+    return re.sub(r'(?<=[a-z])(?=[A-Z])', ' ', match) # split at uppercase letter 
+  text = re.sub(r'#(\w+)', split_title, text) # split at uppercase letter 
   return text
 
 def normalize_alay(text):
