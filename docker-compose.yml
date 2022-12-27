@@ -159,6 +159,7 @@ services:
     restart: unless-stopped
     ports:
       - "127.0.0.1:9092:9092"
+      - "127.0.0.1:29092:29092"
     volumes:
       - kafka_data:/bitnami
     depends_on:
