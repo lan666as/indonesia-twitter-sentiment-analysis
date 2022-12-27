@@ -56,6 +56,7 @@ class TwitterStreamingClient(tweepy.StreamingClient):
             }
             
             if data.geo:
+                print(tags)
                 print(message)
 
             self.producer.send(tags[0][1], message)
